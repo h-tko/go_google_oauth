@@ -15,6 +15,7 @@ const (
 )
 
 type GoogleOAuth struct {
+	reader readCredential
 }
 
 type Credentials struct {
@@ -27,8 +28,14 @@ type CallbackRequest struct {
 	State string `form:"state"`
 }
 
+func NewGoogleOAuth(r readCredential) *GoogleOAuth {
+	return &GoogleOAuth{
+		reader: r,
+	}
+}
+
 func (g *GoogleOAuth) Auth() (string, error) {
-	creds, err := readCredentialsFromJSON()
+	creds, err := g.reader.fromJSON(defaultCredsFile)
 	if err != nil {
 		return "", err
 	}
@@ -41,7 +48,7 @@ func (g *GoogleOAuth) Auth() (string, error) {
 }
 
 func (g *GoogleOAuth) Callback(req *CallbackRequest) error {
-	creds, err := readCredentialsFromJSON()
+	creds, err := g.reader.fromJSON(defaultCredsFile)
 	if err != nil {
 		return err
 	}

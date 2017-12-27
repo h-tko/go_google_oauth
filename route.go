@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/labstack/echo"
 
-	"github.com/mm-lvgs/mss_auth/handler"
+	"github.com/h-tko/go_oauth/handler"
 )
 
 func route(e *echo.Echo) {

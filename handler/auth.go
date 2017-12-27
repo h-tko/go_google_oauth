@@ -5,7 +5,7 @@ import (
 
 	"github.com/labstack/echo"
 
-	"github.com/mm-lvgs/mss_auth/api"
+	"github.com/h-tko/go_oauth/api"
 )
 
 func Auth(c echo.Context) error {

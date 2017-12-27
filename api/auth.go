@@ -5,5 +5,5 @@ type Auth interface {
 }
 
 func NewAuthAPI() Auth {
-	return &GoogleOAuth{}
+	return NewGoogleOAuth(&readCredentialImpl{})
 }
