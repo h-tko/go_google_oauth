@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
+	"os"
 
 	"golang.org/x/oauth2"
 	v2 "google.golang.org/api/oauth2/v2"
@@ -24,8 +24,8 @@ type Credentials struct {
 }
 
 type CallbackRequest struct {
-	Code  string `form:"code"`
-	State string `form:"state"`
+	Code  string `query:"code"`
+	State string `query:"session_state"`
 }
 
 func NewGoogleOAuth(r readCredential) *GoogleOAuth {
@@ -40,39 +40,57 @@ func (g *GoogleOAuth) Auth() (string, error) {
 		return "", err
 	}
 
-	conf := g.oauthConfig(creds)
+	conf, err := g.oauthConfig(creds)
+	if err != nil {
+		return "", err
+	}
 
 	url := conf.AuthCodeURL("")
 
 	return url, nil
 }
 
-func (g *GoogleOAuth) Callback(req *CallbackRequest) error {
+func (g *GoogleOAuth) Callback(req *CallbackRequest) (*v2.Tokeninfo, error) {
 	creds, err := g.reader.fromJSON(defaultCredsFile)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	conf := g.oauthConfig(creds)
+	conf, err := g.oauthConfig(creds)
+	if err != nil {
+		return nil, err
+	}
+
 	ctx := context.Background()
 
 	tok, err := conf.Exchange(ctx, req.Code)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if !tok.Valid() {
-		return errors.New("valid token.")
+		return nil, errors.New("valid token.")
 	}
 
-	service, _ := v2.New(conf.Client(ctx, tok))
-	tokenInfo, _ := service.Tokeninfo().AccessToken(tok.AccessToken).Context(ctx).Do()
-	fmt.Printf("%#V", tokenInfo)
+	service, err := v2.New(conf.Client(ctx, tok))
+	if err != nil {
+		return nil, err
+	}
 
-	return nil
+	tokenInfo, err := service.Tokeninfo().AccessToken(tok.AccessToken).Context(ctx).Do()
+	if err != nil {
+		return nil, err
+	}
+
+	return tokenInfo, nil
 }
 
-func (g *GoogleOAuth) oauthConfig(c Credentials) *oauth2.Config {
+func (g *GoogleOAuth) oauthConfig(c Credentials) (*oauth2.Config, error) {
+	url := os.Getenv("CALLBACK_URL")
+	if url == "" {
+		return nil, errors.New(".envにCALLBACK_URLが設定されていません。")
+	}
+
 	return &oauth2.Config{
 		ClientID:     c.Cid,
 		ClientSecret: c.Csecret,
@@ -85,6 +103,6 @@ func (g *GoogleOAuth) oauthConfig(c Credentials) *oauth2.Config {
 			"email",
 			"profile",
 		},
-		RedirectURL: "http://localhost:8899/callback",
-	}
+		RedirectURL: url,
+	}, nil
 }

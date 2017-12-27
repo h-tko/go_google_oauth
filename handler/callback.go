@@ -15,5 +15,13 @@ func Callback(c echo.Context) error {
 		return err
 	}
 
+	authAPI := api.NewAuthAPI()
+	tokenInfo, err := authAPI.Callback(form)
+	if err != nil {
+		return err
+	}
+
+	c.Logger().Warnf("%#v", tokenInfo)
+
 	return c.String(http.StatusOK, "finish!")
 }
