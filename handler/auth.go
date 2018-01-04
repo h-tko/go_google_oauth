@@ -9,6 +9,9 @@ import (
 )
 
 func Auth(c echo.Context) error {
+
+	c.Logger().Info("start auth handler.")
+
 	authAPI := api.NewAuthAPI()
 	url, err := authAPI.Auth()
 	if err != nil {
