@@ -8,4 +8,3 @@ Go製のoauth認証APIサーバーです。
 
 ・google oauth
 
-
